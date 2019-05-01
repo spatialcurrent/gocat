@@ -68,7 +68,7 @@ jobs:
       - restore_cache:
           keys:
             - v1-go-src-{{ .Branch }}-{{ .Revision }}
-      - run: bash scripts/build_cli.sh
+      - run: make build
       - store_artifacts:
           path: bin
           destination: /
