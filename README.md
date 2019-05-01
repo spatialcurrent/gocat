@@ -17,11 +17,29 @@
 
 No installation is required.  Just grab a [release](https://github.com/spatialcurrent/gocat/releases).  You might want to rename your binary to just `gocat` (or `cat`) for convenience.
 
-If you do have go already installed, you can just run using `go run main.go` or install with `bash scripts/install.sh`
+If you do have go already installed, you can just run using `go run main.go` or install with `make install`
 
 # Usage
 
-See the few examples below.
+See the usage below or the following examples.
+
+```
+gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
+
+Usage:
+  gocat [-|stdin|FILE|URI]... [flags]
+
+Flags:
+  -a, --append-new-lines               append new lines to files that do not end in new lines characters
+      --aws-access-key-id string       AWS Access Key ID
+      --aws-default-region string      AWS Default Region
+      --aws-profile string             AWS Profile
+      --aws-region string              AWS Region (overrides default region)
+      --aws-secret-access-key string   AWS Secret Access Key
+      --aws-session-token string       AWS Session Token
+  -b, --buffer-size int                buffer size for file reader (default 4096)
+  -h, --help                           help for gocat
+```
 
 # Examples
 

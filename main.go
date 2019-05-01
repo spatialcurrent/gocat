@@ -16,8 +16,8 @@ import (
 import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 import (
@@ -33,14 +33,14 @@ import (
 )
 
 const (
-	flagAWSProfile string = "aws-profile"
-	flagAWSDefaultRegion string = "aws-default-region"
-	flagAWSRegion string = "aws-region"
-	flagAWSAccessKeyID string = "aws-access-key-id"
+	flagAWSProfile         string = "aws-profile"
+	flagAWSDefaultRegion   string = "aws-default-region"
+	flagAWSRegion          string = "aws-region"
+	flagAWSAccessKeyID     string = "aws-access-key-id"
 	flagAWSSecretAccessKey string = "aws-secret-access-key"
-	flagAWSSessionToken string = "aws-session-token"
+	flagAWSSessionToken    string = "aws-session-token"
 
-	flagBufferSize string = "buffer-size"
+	flagBufferSize     string = "buffer-size"
 	flagAppendNewlines string = "append-new-lines"
 )
 
@@ -78,7 +78,7 @@ func main() {
 	cmd := &cobra.Command{
 		Use:   "gocat [-|stdin|FILE|URI]...",
 		Short: "gocat",
-		Long:  `super simple utility to concatenate file paths and uris provided as positional arguments.  Can read from stdin (aka \"-\"), local files,  files on AWS S3, or remote urls.`,
+		Long:  `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v, err := initViper(cmd)
 			if err != nil {
@@ -103,12 +103,11 @@ func main() {
 
 			for _, uri := range args {
 
-
 				if uri == "-" {
 					uri = "stdin"
 				}
 
-        if strings.HasPrefix(uri, "s3://") {
+				if strings.HasPrefix(uri, "s3://") {
 					if session == nil {
 						accessKeyID := v.GetString(flagAWSAccessKeyID)
 						secretAccessKey := v.GetString(flagAWSSecretAccessKey)
@@ -116,22 +115,22 @@ func main() {
 
 						region := v.GetString(flagAWSRegion)
 						if len(region) == 0 {
-						  if defaultRegion := v.GetString(flagAWSDefaultRegion); len(defaultRegion) > 0 {
+							if defaultRegion := v.GetString(flagAWSDefaultRegion); len(defaultRegion) > 0 {
 								region = defaultRegion
 							}
 						}
 
 						config := aws.Config{
-						 	MaxRetries: aws.Int(3),
-						 	Region:     aws.String(region),
-						 }
+							MaxRetries: aws.Int(3),
+							Region:     aws.String(region),
+						}
 
-						 if len(accessKeyID) > 0 && len(secretAccessKey) > 0 {
-							 config.Credentials = credentials.NewStaticCredentials(
-								 accessKeyID,
-								 secretAccessKey,
-								 sessionToken)
-						 }
+						if len(accessKeyID) > 0 && len(secretAccessKey) > 0 {
+							config.Credentials = credentials.NewStaticCredentials(
+								accessKeyID,
+								secretAccessKey,
+								sessionToken)
+						}
 
 						session = awssession.Must(awssession.NewSessionWithOptions(awssession.Options{
 							Config: config,
@@ -142,11 +141,10 @@ func main() {
 					}
 				}
 
-
-        inputBytes := make([]byte, 0)
+				inputBytes := make([]byte, 0)
 
 				// if not reading from stdin or stdin hasn't been read yet.
-        if uri != "stdin" || len(stdinBytes) == 0 {
+				if uri != "stdin" || len(stdinBytes) == 0 {
 					inputReader, _, inputError := grw.ReadFromResource(uri, "none", bufferSize, false, s3Client)
 					if inputError != nil {
 						return errors.Wrap(inputError, fmt.Sprintf("error reading from uri %q", uri))
@@ -158,7 +156,7 @@ func main() {
 					inputBytes = b
 				}
 
-        // if reading from stdin and stdin bytes are already cached
+				// if reading from stdin and stdin bytes are already cached
 				if uri == "stdin" && len(inputBytes) == 0 && len(stdinBytes) > 0 {
 					inputBytes = stdinBytes
 				}
@@ -170,8 +168,8 @@ func main() {
 						return errors.Wrap(err, fmt.Sprintf("error writing bytes from uri %q", uri))
 					}
 
-          if v.GetBool(flagAppendNewlines) {
-						if inputBytes[len(inputBytes) - 1] != '\n' {
+					if v.GetBool(flagAppendNewlines) {
+						if inputBytes[len(inputBytes)-1] != '\n' {
 							_, err := os.Stdout.Write([]byte("\n"))
 							if err != nil {
 								return errors.Wrap(err, fmt.Sprintf("error writing new line from uri %q", uri))
