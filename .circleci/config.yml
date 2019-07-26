@@ -9,7 +9,7 @@ jobs:
     executor: base
     steps:
       - checkout
-      - run: go get -d ./...
+      - run: make deps
       - run: go get github.com/inconshreveable/mousetrap # for windows CLI builds
       - run: sudo chown -R circleci /go/src
       - save_cache:
@@ -41,7 +41,7 @@ jobs:
       - run:
           name: Download and install staticheck
           command: go get -u honnef.co/go/tools/cmd/staticcheck
-      - run: bash scripts/test.sh
+      - run: make test
   validate:
     executor: base
     steps:

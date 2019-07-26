@@ -23,7 +23,7 @@ If you do have go already installed, you can just run using `go run main.go` or 
 
 See the usage below or the following examples.
 
-```
+```shell
 gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
 
 Usage:
