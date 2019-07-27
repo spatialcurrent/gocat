@@ -27,10 +27,10 @@ See the usage below or the following examples.
 gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
 
 Usage:
-  gocat [-|stdin|FILE|URI]... [flags]
+  gocat [flags] [-|stdin|FILE|URI]...
 
 Flags:
-  -a, --append-new-lines               append new lines to files that do not end in new lines characters
+  -a, --append-new-lines               append new lines to files
       --aws-access-key-id string       AWS Access Key ID
       --aws-default-region string      AWS Default Region
       --aws-profile string             AWS Profile
