@@ -8,7 +8,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -22,7 +25,6 @@ import (
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	//"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -52,7 +54,7 @@ func initFlags(flag *pflag.FlagSet) {
 	flag.StringP(flagAWSSecretAccessKey, "", "", "AWS Secret Access Key")
 	flag.StringP(flagAWSSessionToken, "", "", "AWS Session Token")
 	flag.IntP(flagBufferSize, "b", 4096, "buffer size for file reader")
-	flag.BoolP(flagAppendNewlines, "a", false, "append new lines to files that do not end in new lines characters")
+	flag.BoolP(flagAppendNewlines, "a", false, "append new lines to files")
 }
 
 func initViper(cmd *cobra.Command) (*viper.Viper, error) {
@@ -76,9 +78,10 @@ func checkConfig(v *viper.Viper) error {
 
 func main() {
 	cmd := &cobra.Command{
-		Use:   "gocat [-|stdin|FILE|URI]...",
-		Short: "gocat",
-		Long:  `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).`,
+		Use:                   "gocat [flags] [-|stdin|FILE|URI]...",
+		Short:                 "gocat",
+		DisableFlagsInUseLine: true,
+		Long:                  `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v, err := initViper(cmd)
 			if err != nil {
@@ -94,6 +97,7 @@ func main() {
 			}
 
 			bufferSize := v.GetInt(flagBufferSize)
+			appendNewlines := v.GetBool(flagAppendNewlines)
 
 			stdinBytes := make([]byte, 0)
 
@@ -101,6 +105,7 @@ func main() {
 
 			var s3Client *s3.S3
 
+			inputReaders := make([]io.Reader, 0)
 			for _, uri := range args {
 
 				if uri == "-" {
@@ -141,49 +146,35 @@ func main() {
 					}
 				}
 
-				inputBytes := make([]byte, 0)
-
-				// if not reading from stdin or stdin hasn't been read yet.
-				if uri != "stdin" || len(stdinBytes) == 0 {
-					inputReader, _, inputError := grw.ReadFromResource(uri, "none", bufferSize, false, s3Client)
-					if inputError != nil {
-						return errors.Wrap(inputError, fmt.Sprintf("error reading from uri %q", uri))
-					}
-					b, inputError := inputReader.ReadAllAndClose()
-					if inputError != nil {
-						return errors.Wrap(inputError, fmt.Sprintf("error reading from uri %q", uri))
-					}
-					inputBytes = b
-				}
-
-				// if reading from stdin and stdin bytes are already cached
-				if uri == "stdin" && len(inputBytes) == 0 && len(stdinBytes) > 0 {
-					inputBytes = stdinBytes
-				}
-
-				if len(inputBytes) > 0 {
-
-					_, err = os.Stdout.Write(inputBytes)
-					if err != nil {
-						return errors.Wrap(err, fmt.Sprintf("error writing bytes from uri %q", uri))
-					}
-
-					if v.GetBool(flagAppendNewlines) {
-						if inputBytes[len(inputBytes)-1] != '\n' {
-							_, err := os.Stdout.Write([]byte("\n"))
-							if err != nil {
-								return errors.Wrap(err, fmt.Sprintf("error writing new line from uri %q", uri))
-							}
+				if uri == "stdin" {
+					if len(stdinBytes) == 0 {
+						b, err := ioutil.ReadAll(os.Stdin)
+						if err != nil {
+							return errors.Wrap(err, "error reading from stdin")
 						}
+						stdinBytes = b
 					}
-
-					if uri == "stdin" {
-						stdinBytes = inputBytes
+					if len(stdinBytes) > 0 {
+						inputReaders = append(inputReaders, bytes.NewReader(stdinBytes))
 					}
+				} else {
+					inputReader, _, err := grw.ReadFromResource(uri, "none", bufferSize, false, s3Client)
+					if err != nil {
+						return errors.Wrap(err, fmt.Sprintf("error reading from uri %q", uri))
+					}
+					inputReaders = append(inputReaders, inputReader)
+				}
 
+				if appendNewlines {
+					inputReaders = append(inputReaders, bytes.NewReader([]byte("\n")))
 				}
 
 			}
+
+			if _, err := io.Copy(os.Stdout, io.MultiReader(inputReaders...)); err != nil {
+				return errors.Wrap(err, "error copying input")
+			}
+
 			return nil
 		},
 	}
