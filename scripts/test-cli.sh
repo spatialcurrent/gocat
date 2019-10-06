@@ -68,6 +68,33 @@ testHttpFiles() {
   fi
 }
 
+#
+# S3
+#
+
+testS3File() {
+  if [[ ! -z "${testdata_s3}" ]]; then
+    local input="hello world"
+    local expected='hello world'
+    local output=$(gocat "${testdata_s3}/doc.txt")
+    assertEquals "unexpected output" "${expected}" "${output}"
+  else
+    echo "* skipping"
+  fi
+}
+
+testS3Files() {
+  if [[ ! -z "${testdata_s3}" ]]; then
+    local input="hello world\nhello world"
+    local expected='hello world'
+    local output=$(gocat "${testdata_s3}/doc.txt" "${testdata_s3}/doc.txt")
+    assertEquals "unexpected output" "${expected}" "${output}"
+  else
+    echo "* skipping"
+  fi
+}
+
+
 oneTimeSetUp() {
   echo "Using temporary directory at ${SHUNIT_TMPDIR}"
   echo "Reading testdata from ${testdata_local}"

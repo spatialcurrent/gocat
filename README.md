@@ -44,7 +44,7 @@ Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), rem
 Supports the following compression algorithms: bzip2, flate, gzip, none, snappy, zip, zlib
 
 Usage:
-  gocat [flags] [-|stdin|INPUT_URI]...
+  gocat [flags] [-|stdin|FILE|URI]...
 
 Flags:
   -a, --append-new-lines               append new lines to files

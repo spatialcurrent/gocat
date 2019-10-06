@@ -71,7 +71,7 @@ func checkConfig(v *viper.Viper) error {
 
 func main() {
 	cmd := &cobra.Command{
-		Use:                   `gocat [flags] [-|stdin|INPUT_URI]...`,
+		Use:                   `gocat [flags] [-|stdin|FILE|URI]...`,
 		DisableFlagsInUseLine: true,
 		Short:                 "gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.",
 		Long: `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.
