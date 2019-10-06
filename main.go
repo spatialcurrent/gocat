@@ -14,24 +14,17 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-)
 
-import (
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-)
-
-import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-)
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 
-import (
-	"github.com/spatialcurrent/go-reader-writer/grw"
+	"github.com/spatialcurrent/go-reader-writer/pkg/grw"
 )
 
 const (
@@ -78,10 +71,12 @@ func checkConfig(v *viper.Viper) error {
 
 func main() {
 	cmd := &cobra.Command{
-		Use:                   "gocat [flags] [-|stdin|FILE|URI]...",
-		Short:                 "gocat",
+		Use:                   `gocat [flags] [-|stdin|FILE|URI]...`,
 		DisableFlagsInUseLine: true,
-		Long:                  `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.  Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).`,
+		Short:                 "gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.",
+		Long: `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.
+Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
+Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, ", "),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v, err := initViper(cmd)
 			if err != nil {
@@ -158,7 +153,13 @@ func main() {
 						inputReaders = append(inputReaders, bytes.NewReader(stdinBytes))
 					}
 				} else {
-					inputReader, _, err := grw.ReadFromResource(uri, "none", bufferSize, false, s3Client)
+					inputReader, _, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
+						Uri:        uri,
+						Alg:        "none",
+						Dict:       grw.NoDict,
+						BufferSize: bufferSize,
+						S3Client:   s3Client,
+					})
 					if err != nil {
 						return errors.Wrap(err, fmt.Sprintf("error reading from uri %q", uri))
 					}
@@ -181,6 +182,8 @@ func main() {
 	initFlags(cmd.Flags())
 
 	if err := cmd.Execute(); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, "gocat: "+err.Error())
+		fmt.Fprintln(os.Stderr, "Try gocat --help for more information.")
+		os.Exit(1)
 	}
 }
