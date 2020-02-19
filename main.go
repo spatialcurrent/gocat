@@ -99,6 +99,7 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 
 			inputReaders := make([]io.Reader, 0)
 			for _, uri := range args {
+				uri := uri
 
 				if uri == "-" {
 					uri = "stdin"
