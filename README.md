@@ -41,7 +41,7 @@ See the usage below or the following examples.
 ```shell
 gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.
 Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
-Supports the following compression algorithms: bzip2, flate, gzip, none, snappy, zip, zlib
+Supports the following compression algorithms: bzip2, flate, gzip, none, snappy, zip, zlib.
 
 Usage:
   gocat [flags] [-|stdin|FILE|URI]...
@@ -92,7 +92,7 @@ The `make build_cli` script is used to build executables for Linux and Windows. 
 
 **Changing Destination**
 
-The default destination for build artifacts is `go-reader-writer/bin`, but you can change the destination with an environment variable.  For building on a Chromebook consider saving the artifacts in `/usr/local/go/bin`, e.g., `DEST=/usr/local/go/bin make build_cli`
+The default destination for build artifacts is `gocat/bin`, but you can change the destination with an environment variable.  For building on a Chromebook consider saving the artifacts in `/usr/local/go/bin`, e.g., `DEST=/usr/local/go/bin make build_cli`
 
 ## Testing
 
