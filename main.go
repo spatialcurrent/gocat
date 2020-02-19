@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -19,11 +18,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/spatialcurrent/go-lazy/pkg/lazy"
 	"github.com/spatialcurrent/go-reader-writer/pkg/grw"
 )
 
@@ -54,7 +53,7 @@ func initViper(cmd *cobra.Command) (*viper.Viper, error) {
 	v := viper.New()
 	err := v.BindPFlags(cmd.Flags())
 	if err != nil {
-		return v, errors.Wrap(err, "error binding flag set to viper")
+		return v, fmt.Errorf("error binding flag set to viper: %w", err)
 	}
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.AutomaticEnv() // set environment variables to overwrite config
@@ -76,11 +75,11 @@ func main() {
 		Short:                 "gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.",
 		Long: `gocat is a super simple utility to concatenate files (local, remote, or on AWS S3) provided as positional arguments.
 Supports stdin (aka "-"), local files (path/to/file or file://path/to/file), remote files (http://path/to/file), or files on AWS S3 (s3://path/to/file).
-Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, ", "),
+Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, ", ") + `.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v, err := initViper(cmd)
 			if err != nil {
-				return errors.Wrap(err, "error initializing viper")
+				return fmt.Errorf("error initializing viper: %w", err)
 			}
 
 			if len(args) == 0 {
@@ -93,8 +92,6 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 
 			bufferSize := v.GetInt(flagBufferSize)
 			appendNewlines := v.GetBool(flagAppendNewlines)
-
-			stdinBytes := make([]byte, 0)
 
 			var session *awssession.Session
 
@@ -142,28 +139,21 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 				}
 
 				if uri == "stdin" {
-					if len(stdinBytes) == 0 {
-						b, err := ioutil.ReadAll(os.Stdin)
-						if err != nil {
-							return errors.Wrap(err, "error reading from stdin")
-						}
-						stdinBytes = b
-					}
-					if len(stdinBytes) > 0 {
-						inputReaders = append(inputReaders, bytes.NewReader(stdinBytes))
-					}
+					inputReaders = append(inputReaders, os.Stdin)
 				} else {
-					inputReader, _, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
-						Uri:        uri,
-						Alg:        "none",
-						Dict:       grw.NoDict,
-						BufferSize: bufferSize,
-						S3Client:   s3Client,
-					})
-					if err != nil {
-						return errors.Wrap(err, fmt.Sprintf("error reading from uri %q", uri))
-					}
-					inputReaders = append(inputReaders, inputReader)
+					inputReaders = append(inputReaders, lazy.NewLazyReader(func() (io.Reader, error) {
+						r, _, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
+							Uri:        uri,
+							Alg:        "none",
+							Dict:       grw.NoDict,
+							BufferSize: bufferSize,
+							S3Client:   s3Client,
+						})
+						if err != nil {
+							return nil, fmt.Errorf("error reading from uri %q: %w", uri, err)
+						}
+						return r, nil
+					}))
 				}
 
 				if appendNewlines {
@@ -173,7 +163,7 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 			}
 
 			if _, err := io.Copy(os.Stdout, io.MultiReader(inputReaders...)); err != nil {
-				return errors.Wrap(err, "error copying input")
+				return fmt.Errorf("error copying input: %w", err)
 			}
 
 			return nil
