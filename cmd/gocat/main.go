@@ -27,15 +27,21 @@ import (
 )
 
 const (
-	flagAWSProfile         string = "aws-profile"
-	flagAWSDefaultRegion   string = "aws-default-region"
-	flagAWSRegion          string = "aws-region"
-	flagAWSAccessKeyID     string = "aws-access-key-id"
-	flagAWSSecretAccessKey string = "aws-secret-access-key"
-	flagAWSSessionToken    string = "aws-session-token"
+	GoCatVersion = "v2.1.0"
+)
 
-	flagBufferSize     string = "buffer-size"
-	flagAppendNewlines string = "append-new-lines"
+const (
+	flagAWSProfile         = "aws-profile"
+	flagAWSDefaultRegion   = "aws-default-region"
+	flagAWSRegion          = "aws-region"
+	flagAWSAccessKeyID     = "aws-access-key-id"
+	flagAWSSecretAccessKey = "aws-secret-access-key"
+	flagAWSSessionToken    = "aws-session-token"
+
+	flagBufferSize     = "buffer-size"
+	flagAppendNewlines = "append-new-lines"
+
+	flagVersion = "version"
 )
 
 func initFlags(flag *pflag.FlagSet) {
@@ -47,6 +53,7 @@ func initFlags(flag *pflag.FlagSet) {
 	flag.StringP(flagAWSSessionToken, "", "", "AWS Session Token")
 	flag.IntP(flagBufferSize, "b", 4096, "buffer size for file reader")
 	flag.BoolP(flagAppendNewlines, "a", false, "append new lines to files")
+	flag.Bool(flagVersion, false, "show version")
 }
 
 func initViper(cmd *cobra.Command) (*viper.Viper, error) {
@@ -80,6 +87,11 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 			v, err := initViper(cmd)
 			if err != nil {
 				return fmt.Errorf("error initializing viper: %w", err)
+			}
+
+			if v.GetBool(flagVersion) {
+				fmt.Println(GoCatVersion)
+				return nil
 			}
 
 			if len(args) == 0 {

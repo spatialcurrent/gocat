@@ -4,35 +4,24 @@
 
 # Description
 
-**gocat** is a super simple command line program for concatenating files.  **gocat** supports the following operating systems and architectures.
+**gocat** is a super simple command line program for concatenating files.  **gocat** lazily loads files to reduce memory usage and the number of active file pointers.  **gocat** can read from local files, HTTP(S) endpoints, and files on S3.
 
 ## Platforms
 
 The following platforms are supported.  Pull requests to support other platforms are welcome!
 
-| GOOS | GOARCH |
-| ---- | ------ |
-| darwin | amd64 |
-| linux | amd64 |
-| windows | amd64 |
-| linux | arm64 |
+| GOOS | 386 | amd64 | arm | arm64 |
+| ---- | --- | ----- | --- | ----- |
+| darwin | - | ✓ | - | - |
+| freebsd | ✓ | ✓ | ✓ | - |
+| linux | ✓ | ✓ | ✓ | ✓ |
+| openbsd | ✓ | ✓ | - | - |
+| solaris | - | ✓ | - | - |
+| windows | ✓ | ✓ | - | - |
 
 ## Releases
 
-Find releases at [https://github.com/spatialcurrent/gocat/releases](https://github.com/spatialcurrent/gocat/releases).  You might want to rename your binary to just `gocat` (or `cat`) for convenience.  See the **Building** section below to build from scratch.
-
-**Darwin**
-
-- `gocat_darwin_amd64` - CLI for Darwin on amd64 (includes `macOS` and `iOS` platforms)
-
-**Linux**
-
-- `gocat_linux_amd64` - CLI for Linux on amd64
-- `gocat_linux_amd64` - CLI for Linux on arm64
-
-**Windows**
-
-- `gocat_windows_amd64.exe` - CLI for Windows on amd64
+Find releases for the supported platforms at [https://github.com/spatialcurrent/gosync/releases](https://github.com/spatialcurrent/gosync/releases).  See the **Building** section below to build for another platform from source.
 
 ## Usage
 
