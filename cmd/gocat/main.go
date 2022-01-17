@@ -1,6 +1,6 @@
 // =================================================================
 //
-// Copyright (C) 2020 Spatial Current, Inc. - All Rights Reserved
+// Copyright (C) 2022 Spatial Current, Inc. - All Rights Reserved
 // Released as open source under the MIT License.  See LICENSE file.
 //
 // =================================================================
@@ -155,17 +155,17 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 					inputReaders = append(inputReaders, os.Stdin)
 				} else {
 					inputReaders = append(inputReaders, lazy.NewLazyReader(func() (io.Reader, error) {
-						r, _, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
-							Uri:        uri,
+						r, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
+							URI:        uri,
 							Alg:        "none",
 							Dict:       grw.NoDict,
 							BufferSize: bufferSize,
 							S3Client:   s3Client,
 						})
 						if err != nil {
-							return nil, fmt.Errorf("error reading from uri %q: %w", uri, err)
+							return nil, fmt.Errorf("error reading from URI %q: %w", uri, err)
 						}
-						return r, nil
+						return r.Reader, nil
 					}))
 				}
 

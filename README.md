@@ -1,4 +1,7 @@
-[![CircleCI](https://circleci.com/gh/spatialcurrent/gocat/tree/master.svg?style=svg)](https://circleci.com/gh/spatialcurrent/gocat/tree/master) [![Go Report Card](https://goreportcard.com/badge/spatialcurrent/gocat)](https://goreportcard.com/report/spatialcurrent/gocat)  [![GoDoc](https://godoc.org/github.com/spatialcurrent/gocat?status.svg)](https://godoc.org/github.com/spatialcurrent/gocat) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://github.com/spatialcurrent/gocat/blob/master/LICENSE)
+[![CircleCI](https://circleci.com/gh/spatialcurrent/gocat/tree/main.svg?style=svg)](https://circleci.com/gh/spatialcurrent/gocat/tree/main)
+[![Go Report Card](https://goreportcard.com/badge/spatialcurrent/gocat?style=flat-square)](https://goreportcard.com/report/github.com/spatialcurrent/gocat)
+[![PkgGoDev](https://pkg.go.dev/badge/mod/github.com/spatialcurrent/gocat)](https://pkg.go.dev/github.com/spatialcurrent/gocat)
+[![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://github.com/spatialcurrent/gocat/blob/master/LICENSE)
 
 # gocat
 
@@ -21,7 +24,7 @@ The following platforms are supported.  Pull requests to support other platforms
 
 ## Releases
 
-Find releases for the supported platforms at [https://github.com/spatialcurrent/gosync/releases](https://github.com/spatialcurrent/gosync/releases).  See the **Building** section below to build for another platform from source.
+Find releases for the supported platforms at [https://github.com/spatialcurrent/gocat/releases](https://github.com/spatialcurrent/gocat/releases).  See the **Building** section below to build for another platform from source.
 
 ## Usage
 
@@ -95,7 +98,7 @@ TMPDIR="/usr/local/tmp" make test_cli
 
 **Go**
 
-To run Go tests use `make test_go` (or `bash scripts/test.sh`), which runs unit tests, `go vet`, `go vet with shadow`, [errcheck](https://github.com/kisielk/errcheck), [ineffassign](https://github.com/gordonklaus/ineffassign), [staticcheck](https://staticcheck.io/), and [misspell](https://github.com/client9/misspell).
+To run Go tests use `make test_go` or (`bash scripts/test.sh`), which runs unit tests, `go vet`, `go vet with shadow`, [errcheck](https://github.com/kisielk/errcheck), [staticcheck](https://staticcheck.io/), and [misspell](https://github.com/client9/misspell).
 
 ## Contributing
 

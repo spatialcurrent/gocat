@@ -1,20 +1,27 @@
+# =================================================================
+#
+# Copyright (C) 2022 Spatial Current, Inc. - All Rights Reserved
+# Released as open source under the MIT License.  See LICENSE file.
+#
+# =================================================================
+
 version: "2.1"
 
 executors:
-  # `main` uses the `cimg/go:1.15` docker image.
+  # `main` uses the `cimg/go:1.17` docker image.
   main:
     docker:
-      - image: cimg/go:1.15
+      - image: cimg/go:1.17
 
   # `base` uses the `cimg/base` docker image.
   base:
     docker:
       - image: cimg/base:2020.07
 
-  # `macos` uses the Windows machine image.
+  # `macos` uses the macOS machine image.
   macos:
     macos:
-      xcode: 11.5.0
+      xcode: 12.4.0
       resource_class: medium
 
   # `windows` uses the Windows machine image.
@@ -27,39 +34,43 @@ executors:
 
 jobs:
 
-  # `test_go` tests the gocat source code.
+  # `test_go` tests the source code.
   test_go:
     executor: main
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
       - run: make fmt
       - run: make imports
       - run: make test_go
       - run: git diff --exit-code
 
-  # `test_cli` builds the gocat executable.
+  # `test_cli` tests the executable.
   test_cli:
     executor: main
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
       - run: make tidy
       - run: make bin/gocat
       - run: make test_cli
 
-  # `build` builds the gocat executable.
+  # `build` builds the executables
   build:
     executor: main
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
+
+      # Update apt cache
+      - run: sudo apt-get update
+
+      # Tidy dependencies
       - run: make tidy
+
+      # Build Executeables
       - run: make build_release
+
+      # Remove gox
       - run: rm -f bin/gox
+
       - store_artifacts:
           path: bin
           destination: /
@@ -67,6 +78,7 @@ jobs:
           root: bin
           paths:
             - gocat_darwin_amd64
+            - gocat_darwin_arm64
             - gocat_linux_386
             - gocat_linux_amd64
             - gocat_linux_arm
@@ -99,7 +111,6 @@ jobs:
           at: bin
       - run: bin/gocat_windows_386.exe --help
       - run: bin/gocat_windows_amd64.exe --help
-
 
 workflows:
   version: 2

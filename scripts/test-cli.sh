@@ -2,7 +2,7 @@
 
 # =================================================================
 #
-# Copyright (C) 2019 Spatial Current, Inc. - All Rights Reserved
+# Copyright (C) 2022 Spatial Current, Inc. - All Rights Reserved
 # Released as open source under the MIT License.  See LICENSE file.
 #
 # =================================================================
@@ -11,7 +11,7 @@ set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export testdata_local=$(realpath "${DIR}/../testdata")
+export testdata_local="${DIR}/../testdata"
 
 export "testdata_http"="${GOCAT_TESTDATA_HTTP:-}"
 
