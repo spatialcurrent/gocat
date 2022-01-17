@@ -16,6 +16,7 @@ package tools
 import (
 	_ "github.com/client9/misspell"
 	_ "github.com/kisielk/errcheck"
+	_ "github.com/mitchellh/gox"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
 	_ "honnef.co/go/tools/cmd/staticcheck"
