@@ -9,21 +9,25 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/spatialcurrent/go-lazy/pkg/lazy"
 	"github.com/spatialcurrent/go-reader-writer/pkg/grw"
+	"github.com/spatialcurrent/go-reader-writer/pkg/splitter"
 )
 
 const (
@@ -75,6 +79,28 @@ func checkConfig(v *viper.Viper) error {
 	return nil
 }
 
+func initAWSSession(accessKeyID string, secretAccessKey string, sessionToken string, region string) (*awssession.Session, error) {
+	config := aws.Config{
+		MaxRetries: aws.Int(3),
+		Region:     aws.String(region),
+	}
+
+	if len(accessKeyID) > 0 && len(secretAccessKey) > 0 {
+		config.Credentials = credentials.NewStaticCredentials(
+			accessKeyID,
+			secretAccessKey,
+			sessionToken)
+	}
+
+	s, err := awssession.NewSessionWithOptions(awssession.Options{
+		Config: config,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating new AWS session for region %q: %w", region, err)
+	}
+	return s, nil
+}
+
 func main() {
 	cmd := &cobra.Command{
 		Use:                   `gocat [flags] [-|stdin|FILE|URI]...`,
@@ -105,9 +131,22 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 			bufferSize := v.GetInt(flagBufferSize)
 			appendNewlines := v.GetBool(flagAppendNewlines)
 
-			var session *awssession.Session
+			// if reading from AWS, use this region to create a session
+			region := v.GetString(flagAWSRegion)
+			if len(region) == 0 {
+				if defaultRegion := v.GetString(flagAWSDefaultRegion); len(defaultRegion) > 0 {
+					region = defaultRegion
+				}
+			}
 
-			var s3Client *s3.S3
+			accessKeyID := v.GetString(flagAWSAccessKeyID)
+			secretAccessKey := v.GetString(flagAWSSecretAccessKey)
+			sessionToken := v.GetString(flagAWSSessionToken)
+
+			sessions := map[string]*awssession.Session{}
+			clients := map[string]*s3.S3{}
+
+			ctx := context.Background()
 
 			inputReaders := make([]io.Reader, 0)
 			for _, uri := range args {
@@ -118,36 +157,12 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 				}
 
 				if strings.HasPrefix(uri, "s3://") {
-					if session == nil {
-						accessKeyID := v.GetString(flagAWSAccessKeyID)
-						secretAccessKey := v.GetString(flagAWSSecretAccessKey)
-						sessionToken := v.GetString(flagAWSSessionToken)
-
-						region := v.GetString(flagAWSRegion)
-						if len(region) == 0 {
-							if defaultRegion := v.GetString(flagAWSDefaultRegion); len(defaultRegion) > 0 {
-								region = defaultRegion
-							}
+					if _, ok := sessions[region]; !ok {
+						s, initAWSSessionError := initAWSSession(accessKeyID, secretAccessKey, sessionToken, region)
+						if initAWSSessionError != nil {
+							return fmt.Errorf("error creating new AWS session for uri %q: %w", uri, initAWSSessionError)
 						}
-
-						config := aws.Config{
-							MaxRetries: aws.Int(3),
-							Region:     aws.String(region),
-						}
-
-						if len(accessKeyID) > 0 && len(secretAccessKey) > 0 {
-							config.Credentials = credentials.NewStaticCredentials(
-								accessKeyID,
-								secretAccessKey,
-								sessionToken)
-						}
-
-						session = awssession.Must(awssession.NewSessionWithOptions(awssession.Options{
-							Config: config,
-						}))
-					}
-					if s3Client == nil {
-						s3Client = s3.New(session)
+						sessions[region] = s
 					}
 				}
 
@@ -155,12 +170,31 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 					inputReaders = append(inputReaders, os.Stdin)
 				} else {
 					inputReaders = append(inputReaders, lazy.NewLazyReader(func() (io.Reader, error) {
+						var bucketClient *s3.S3
+						if strings.HasPrefix(uri, "s3://") {
+							_, fullpath := splitter.SplitURI(uri)
+							bucketName := fullpath[0:strings.Index(fullpath, "/")]
+							bucketRegion, getBucketRegionError := s3manager.GetBucketRegion(ctx, sessions[region], bucketName, region)
+							if getBucketRegionError != nil {
+								if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {
+									return nil, fmt.Errorf("error getting region for uri %q: %w", uri, aerr)
+								}
+								return nil, fmt.Errorf("error getting region for uri %q: %w", uri, getBucketRegionError)
+							}
+							if _, ok := sessions[bucketRegion]; !ok {
+								sessions[bucketRegion] = sessions[region].Copy(&aws.Config{Region: aws.String(bucketRegion)})
+							}
+							if _, ok := clients[bucketRegion]; !ok {
+								clients[bucketRegion] = s3.New(sessions[bucketRegion])
+							}
+							bucketClient = clients[bucketRegion]
+						}
 						r, err := grw.ReadFromResource(&grw.ReadFromResourceInput{
 							URI:        uri,
 							Alg:        "none",
 							Dict:       grw.NoDict,
 							BufferSize: bufferSize,
-							S3Client:   s3Client,
+							S3Client:   bucketClient,
 						})
 						if err != nil {
 							return nil, fmt.Errorf("error reading from URI %q: %w", uri, err)
@@ -168,11 +202,10 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 						return r.Reader, nil
 					}))
 				}
-
+				// if appendNewlines is true, then append a new line character at the end of the file
 				if appendNewlines {
 					inputReaders = append(inputReaders, bytes.NewReader([]byte("\n")))
 				}
-
 			}
 
 			if _, err := io.Copy(os.Stdout, io.MultiReader(inputReaders...)); err != nil {
