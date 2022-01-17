@@ -48,6 +48,7 @@ Flags:
       --aws-session-token string       AWS Session Token
   -b, --buffer-size int                buffer size for file reader (default 4096)
   -h, --help                           help for gocat
+      --version                        show version
 ```
 
 ## Examples
