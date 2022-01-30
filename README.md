@@ -77,15 +77,19 @@ gocat $( find . -print | grep -i '.*[.]md')
 
 ## Building
 
-Use `make help` to see help information for each target.
+**gocat** is written in pure Go.  The only dependency needed to compile the program is [Go](https://go.dev/).
 
-**CLI**
+This project supports the use of [direnv](https://direnv.net/) to manage environment variables.
 
-The `make build_cli` script is used to build executables for Linux and Windows.  Use `make install` for standard installation as a go executable.
+If using `macOS`, follow the `macOS` instructions below.
 
-**Changing Destination**
+Use `make bin/gocat` to build for your local operating system.  Use `make build_release` to build for a release.  Alternatively, you can call `go build` directly for your specific scenario.
 
-The default destination for build artifacts is `gocat/bin`, but you can change the destination with an environment variable.  For building on a Chromebook consider saving the artifacts in `/usr/local/go/bin`, e.g., `DEST=/usr/local/go/bin make build_cli`
+### macOS
+
+To install `go` on macOS with homebrew use `brew install go`.
+
+To install `direnv` on macOS with homebrew use `brew install direnv`.  If using bash, then add `eval \"$(direnv hook bash)\"` to the `~/.bash_profile` file .  If using zsh, then add `eval \"$(direnv hook zsh)\"` to the `~/.zshrc` file.
 
 ## Testing
 
