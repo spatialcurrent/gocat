@@ -1,38 +1,30 @@
-[![CircleCI](https://circleci.com/gh/spatialcurrent/gocat/tree/master.svg?style=svg)](https://circleci.com/gh/spatialcurrent/gocat/tree/master) [![Go Report Card](https://goreportcard.com/badge/spatialcurrent/gocat)](https://goreportcard.com/report/spatialcurrent/gocat)  [![GoDoc](https://godoc.org/github.com/spatialcurrent/gocat?status.svg)](https://godoc.org/github.com/spatialcurrent/gocat) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://github.com/spatialcurrent/gocat/blob/master/LICENSE)
+[![CircleCI](https://circleci.com/gh/spatialcurrent/gocat/tree/main.svg?style=svg)](https://circleci.com/gh/spatialcurrent/gocat/tree/main)
+[![Go Report Card](https://goreportcard.com/badge/spatialcurrent/gocat?style=flat-square)](https://goreportcard.com/report/github.com/spatialcurrent/gocat)
+[![PkgGoDev](https://pkg.go.dev/badge/mod/github.com/spatialcurrent/gocat)](https://pkg.go.dev/github.com/spatialcurrent/gocat)
+[![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://github.com/spatialcurrent/gocat/blob/master/LICENSE)
 
 # gocat
 
 # Description
 
-**gocat** is a super simple command line program for concatenating files.  **gocat** supports the following operating systems and architectures.
+**gocat** is a super simple command line program for concatenating files.  **gocat** lazily loads files to reduce memory usage and the number of active file pointers.  **gocat** can read from local files, HTTP(S) endpoints, and files on S3.
 
 ## Platforms
 
 The following platforms are supported.  Pull requests to support other platforms are welcome!
 
-| GOOS | GOARCH |
-| ---- | ------ |
-| darwin | amd64 |
-| linux | amd64 |
-| windows | amd64 |
-| linux | arm64 |
+| GOOS | 386 | amd64 | arm | arm64 |
+| ---- | --- | ----- | --- | ----- |
+| darwin | - | ✓ | - | - |
+| freebsd | ✓ | ✓ | ✓ | - |
+| linux | ✓ | ✓ | ✓ | ✓ |
+| openbsd | ✓ | ✓ | - | - |
+| solaris | - | ✓ | - | - |
+| windows | ✓ | ✓ | - | - |
 
 ## Releases
 
-Find releases at [https://github.com/spatialcurrent/gocat/releases](https://github.com/spatialcurrent/gocat/releases).  You might want to rename your binary to just `gocat` (or `cat`) for convenience.  See the **Building** section below to build from scratch.
-
-**Darwin**
-
-- `gocat_darwin_amd64` - CLI for Darwin on amd64 (includes `macOS` and `iOS` platforms)
-
-**Linux**
-
-- `gocat_linux_amd64` - CLI for Linux on amd64
-- `gocat_linux_amd64` - CLI for Linux on arm64
-
-**Windows**
-
-- `gocat_windows_amd64.exe` - CLI for Windows on amd64
+Find releases for the supported platforms at [https://github.com/spatialcurrent/gocat/releases](https://github.com/spatialcurrent/gocat/releases).  See the **Building** section below to build for another platform from source.
 
 ## Usage
 
@@ -56,6 +48,7 @@ Flags:
       --aws-session-token string       AWS Session Token
   -b, --buffer-size int                buffer size for file reader (default 4096)
   -h, --help                           help for gocat
+      --version                        show version
 ```
 
 ## Examples
@@ -84,15 +77,19 @@ gocat $( find . -print | grep -i '.*[.]md')
 
 ## Building
 
-Use `make help` to see help information for each target.
+**gocat** is written in pure Go.  The only dependency needed to compile the program is [Go](https://go.dev/).
 
-**CLI**
+This project supports the use of [direnv](https://direnv.net/) to manage environment variables.
 
-The `make build_cli` script is used to build executables for Linux and Windows.  Use `make install` for standard installation as a go executable.
+If using `macOS`, follow the `macOS` instructions below.
 
-**Changing Destination**
+Use `make bin/gocat` to build for your local operating system.  Use `make build_release` to build for a release.  Alternatively, you can call `go build` directly for your specific scenario.
 
-The default destination for build artifacts is `gocat/bin`, but you can change the destination with an environment variable.  For building on a Chromebook consider saving the artifacts in `/usr/local/go/bin`, e.g., `DEST=/usr/local/go/bin make build_cli`
+### macOS
+
+To install `go` on macOS with homebrew use `brew install go`.
+
+To install `direnv` on macOS with homebrew use `brew install direnv`.  If using bash, then add `eval \"$(direnv hook bash)\"` to the `~/.bash_profile` file .  If using zsh, then add `eval \"$(direnv hook zsh)\"` to the `~/.zshrc` file.
 
 ## Testing
 
@@ -106,7 +103,7 @@ TMPDIR="/usr/local/tmp" make test_cli
 
 **Go**
 
-To run Go tests use `make test_go` (or `bash scripts/test.sh`), which runs unit tests, `go vet`, `go vet with shadow`, [errcheck](https://github.com/kisielk/errcheck), [ineffassign](https://github.com/gordonklaus/ineffassign), [staticcheck](https://staticcheck.io/), and [misspell](https://github.com/client9/misspell).
+To run Go tests use `make test_go` or (`bash scripts/test.sh`), which runs unit tests, `go vet`, `go vet with shadow`, [errcheck](https://github.com/kisielk/errcheck), [staticcheck](https://staticcheck.io/), and [misspell](https://github.com/client9/misspell).
 
 ## Contributing
 

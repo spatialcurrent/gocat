@@ -1,4 +1,14 @@
+# compiled binaries
+bin
+
+# direnv
+.envrc.local
+
+# secrets
 secret/
-bin/
+
+# miscellaneous
+.DS_Store
+temp
 *.so
 *.h
