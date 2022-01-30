@@ -143,7 +143,10 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 			secretAccessKey := v.GetString(flagAWSSecretAccessKey)
 			sessionToken := v.GetString(flagAWSSessionToken)
 
+			// AWS Sessions by region
 			sessions := map[string]*awssession.Session{}
+
+			// AWS S3 Clients by region
 			clients := map[string]*s3.S3{}
 
 			ctx := context.Background()
@@ -153,22 +156,19 @@ Supports the following compression algorithms: ` + strings.Join(grw.Algorithms, 
 				uri := uri
 
 				if uri == "-" {
-					uri = "stdin"
-				}
-
-				if strings.HasPrefix(uri, "s3://") {
-					if _, ok := sessions[region]; !ok {
-						s, initAWSSessionError := initAWSSession(accessKeyID, secretAccessKey, sessionToken, region)
-						if initAWSSessionError != nil {
-							return fmt.Errorf("error creating new AWS session for uri %q: %w", uri, initAWSSessionError)
-						}
-						sessions[region] = s
-					}
-				}
-
-				if uri == "stdin" {
 					inputReaders = append(inputReaders, os.Stdin)
 				} else {
+
+					if strings.HasPrefix(uri, "s3://") {
+						if _, ok := sessions[region]; !ok {
+							s, initAWSSessionError := initAWSSession(accessKeyID, secretAccessKey, sessionToken, region)
+							if initAWSSessionError != nil {
+								return fmt.Errorf("error creating new AWS session for uri %q: %w", uri, initAWSSessionError)
+							}
+							sessions[region] = s
+						}
+					}
+
 					inputReaders = append(inputReaders, lazy.NewLazyReader(func() (io.Reader, error) {
 						var bucketClient *s3.S3
 						if strings.HasPrefix(uri, "s3://") {

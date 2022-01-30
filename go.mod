@@ -3,7 +3,7 @@ module github.com/spatialcurrent/gocat
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.42.35
+	github.com/aws/aws-sdk-go v1.42.44
 	github.com/client9/misspell v0.3.4
 	github.com/kisielk/errcheck v1.6.0
 	github.com/mitchellh/gox v1.0.1
@@ -12,7 +12,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	golang.org/x/tools v0.1.8
+	golang.org/x/tools v0.1.9
 	honnef.co/go/tools v0.2.2
 )
 
